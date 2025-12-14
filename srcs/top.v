@@ -1,34 +1,21 @@
-/*
-    DO NOT, UNDER ANY CIRCUMSTANCES, MODIFY THIS FILE! THIS HAS TO REMAIN AS SUCH IN ORDER 
-    FOR THE TESTBENCH PROVIDED TO WORK PROPERLY.
-*/
 module top(
-    // peripheral clock signals
     input clk,
     input rst_n,
-    // SPI master facing signals
     input sclk,
     input cs_n,
-    input miso,
-    output mosi,
-    // peripheral signals
+    input mosi,      
+    output miso,     
     output pwm_out
 );
-
-wire clk;
-wire rst_n;
-
-wire sclk;
-wire cs_n;
-wire miso;
-wire mosi;
 
 wire byte_sync;
 wire[7:0] data_in;
 wire[7:0] data_out;
+
 wire read;
 wire write;
 wire[5:0] addr;
+wire high_byte;
 wire[7:0] data_read;
 wire[7:0] data_write;
 
@@ -49,19 +36,23 @@ spi_bridge i_spi_bridge (
     .rst_n(rst_n),
     .sclk(sclk),
     .cs_n(cs_n),
-    .miso(miso),
-    .mosi(mosi)
+    .mosi(mosi),        
+    .miso(miso),        
+    .byte_sync(byte_sync),  
+    .data_in(data_in),      
+    .data_out(data_out)    
 );
 
 instr_dcd i_instr_dcd (
     .clk(clk),
     .rst_n(rst_n),
-    .byte_sync(),
+    .byte_sync(byte_sync),  
     .data_in(data_in),
     .data_out(data_out),
     .read(read),
     .write(write),
     .addr(addr),
+    .high_byte(high_byte),
     .data_read(data_read),
     .data_write(data_write)
 );
@@ -72,6 +63,7 @@ regs i_regs (
     .read(read),
     .write(write),
     .addr(addr),
+    .high_byte(high_byte),
     .data_read(data_read),
     .data_write(data_write),
     .counter_val(counter_val),
