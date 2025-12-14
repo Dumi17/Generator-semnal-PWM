@@ -1,53 +1,52 @@
 module counter (
-    // peripheral clock signals
     input clk,
     input rst_n,
-    // register facing signals
-    output [15:0] count_val,
-    input [15:0] period,
+    output[15:0] count_val,
+    input[15:0] period,
     input en,
     input count_reset,
     input upnotdown,
-    input [7:0]  prescale
+    input[7:0] prescale
 );
 
-    reg [15:0] count_val_reg;
-    reg [15:0] presc_cnt;
+reg [15:0] counter_reg;
 
-    assign count_val = count_val_reg;
+reg [7:0] prescale_cnt;
 
-    wire [15:0] prescale_limit =
-        (prescale[3:0] == 4'd0) ? 16'd0 :
-        ((16'd1 << prescale[3:0]) - 16'd1);
+wire [7:0] prescale_threshold = (1 << prescale) - 1;
 
-    always @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
-            count_val_reg <= 16'h0000;
-            presc_cnt <= 16'h0000;
-        end else begin
-            if (count_reset) begin
-                count_val_reg <= 16'h0000;
-                presc_cnt <= 16'h0000;
-            end else if (en) begin
-                if (presc_cnt >= prescale_limit) begin
-                    presc_cnt <= 16'h0000;
+wire prescale_tick = (prescale_cnt == prescale_threshold);
 
-                    if (upnotdown) begin
-                        if (count_val_reg >= period)
-                            count_val_reg <= 16'h0000;
-                        else
-                            count_val_reg <= count_val_reg + 16'h0001;
-                    end else begin
-                        if (count_val_reg == 16'h0000)
-                            count_val_reg <= period;
-                        else
-                            count_val_reg <= count_val_reg - 16'h0001;
-                    end
+always @(posedge clk or negedge rst_n) begin
+    if (!rst_n) begin
+        counter_reg <= 16'd0;
+        prescale_cnt <= 8'd0;
+    end else if (count_reset) begin
+        counter_reg <= 16'd0;
+        prescale_cnt <= 8'd0;
+    end else if (en) begin
+        if (prescale_tick) begin
+            prescale_cnt <= 8'd0;
+            
+            if (upnotdown) begin
+                if (counter_reg >= period) begin
+                    counter_reg <= 16'd0;
                 end else begin
-                    presc_cnt <= presc_cnt + 16'h0001;
+                    counter_reg <= counter_reg + 1'b1;
+                end
+            end else begin
+                if (counter_reg == 16'd0) begin
+                    counter_reg <= period;
+                end else begin
+                    counter_reg <= counter_reg - 1'b1;
                 end
             end
+        end else begin
+            prescale_cnt <= prescale_cnt + 1'b1;
         end
     end
+end
+
+assign count_val = counter_reg;
 
 endmodule
